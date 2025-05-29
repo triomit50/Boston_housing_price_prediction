@@ -1,4 +1,45 @@
-import streamlit as st
-st.title("Hello!! This is Trinankur Mitra")
-st.header("M.Tech. - IITM")
-st.subheader(" This is a sub-header")
+# Libraries import
+
+import pickle
+from flask import Flask, request, app, jsonify, url_for, render_template
+import numpy as np
+import pandas as pd
+
+# App creation
+app = Flask(__name__)
+
+# Model Loading --> Model Tool
+reg_model = pickle.load(open('regModel.pkl',"rb"))
+
+# Scaler loading --> Scaler Tool
+scaler = pickle.load(open("scaling.pkl","rb"))
+
+# App routing...
+
+# initial home page
+@app.route('/')
+def home():
+    return render_template('home.html')
+
+# creating predict api : sending request to the app and get the response
+@app.route('/predict_api',methods = ['POST'])
+def predict_api():
+    data = request.json['data']     # input as 'json' format, stored in the 'data' variable
+    print(data)
+
+    # converting the entire input data into "a single row array"
+    print(np.array(list(data.values())).reshape(1,-1))      
+
+    # scaling the data --> using the scaler tool
+    new_data = scaler.transform(np.array(list(data.values())).reshape(1,-1))
+    
+    # getting the output of the input data , using the Model Tool
+    output = reg_model.predict(new_data)
+
+    print(output[0])
+    
+    return jsonify(output[0])
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
